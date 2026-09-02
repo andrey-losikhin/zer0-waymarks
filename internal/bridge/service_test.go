@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/zer0/zer0-waymarks/internal/protocol"
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/protocol"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 type fakeStore struct{ projection store.Projection }

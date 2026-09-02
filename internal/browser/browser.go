@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/zer0/zer0-waymarks/internal/protocol"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/protocol"
 )
 
 var (

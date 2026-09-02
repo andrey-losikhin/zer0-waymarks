@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 func TestParseNestedNetscapeHTML(t *testing.T) {

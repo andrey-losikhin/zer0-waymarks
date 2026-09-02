@@ -1,7 +1,6 @@
 package plugincontract
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -82,14 +81,11 @@ func TestPanelProvidesRequiredUserFlows(t *testing.T) {
 	}
 }
 
-func TestEnglishTranslationsAreValidJSON(t *testing.T) {
-	var translations map[string]string
-	if err := json.Unmarshal([]byte(read(t, "translations/en.json")), &translations); err != nil {
-		t.Fatal(err)
-	}
-	for _, key := range []string{"settings.browser_id.label", "settings.browser_id.description", "settings.profile_id.label", "settings.profile_id.description"} {
-		if translations[key] == "" {
-			t.Errorf("missing translation %q", key)
+func TestManifestDoesNotExposeLegacyBrowserSettings(t *testing.T) {
+	manifest := read(t, "plugin.toml")
+	for _, legacy := range []string{`key = "browser_id"`, `key = "profile_id"`} {
+		if strings.Contains(manifest, legacy) {
+			t.Errorf("manifest still exposes unused setting %q", legacy)
 		}
 	}
 }

@@ -1,4 +1,3 @@
-module github.com/zer0/zer0-waymarks
+module github.com/andrey-losikhin/zer0-waymarks
 
 go 1.24
-

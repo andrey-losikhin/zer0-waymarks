@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/zer0/zer0-waymarks/internal/bookmarkhtml"
-	"github.com/zer0/zer0-waymarks/internal/bridge"
-	"github.com/zer0/zer0-waymarks/internal/browser"
-	"github.com/zer0/zer0-waymarks/internal/nativehost"
-	"github.com/zer0/zer0-waymarks/internal/protocol"
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/bookmarkhtml"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/bridge"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/browser"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/nativehost"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/protocol"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 const maxOutput = 512 * 1024

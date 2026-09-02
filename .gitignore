@@ -1,0 +1,15 @@
+/dist/
+/bin/
+*.test
+*.out
+coverage.*
+/.idea/
+/.vscode/
+/.fleet/
+/.DS_Store
+*.swp
+*.swo
+.env
+.env.*
+!.env.example
+/.docs/

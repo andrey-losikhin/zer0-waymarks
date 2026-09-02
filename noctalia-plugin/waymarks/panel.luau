@@ -436,13 +436,6 @@ local function loadBrowsers()
       if browser.id == configuredBrowser then browserIndex = index - 1 end
     end
     rebuildProfiles()
-    local configuredProfile = noctalia.getConfig("profile_id")
-    local selectedBrowser = browsers[browserIndex + 1]
-    if type(configuredProfile) == "string" and configuredProfile ~= "" and selectedBrowser ~= nil then
-      for index, profile in ipairs(selectedBrowser.profiles or {}) do
-        if profile.id == configuredProfile then profileIndex = index end
-      end
-    end
     renderPanel()
   end)
 end

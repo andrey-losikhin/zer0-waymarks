@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/zer0/zer0-waymarks/internal/browser"
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/browser"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 func TestAddAndListContract(t *testing.T) {

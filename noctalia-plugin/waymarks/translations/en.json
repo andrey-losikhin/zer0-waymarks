@@ -1,7 +1,0 @@
-{
-  "settings.browser_id.label": "Default browser ID",
-  "settings.browser_id.description": "Browser ID from the helper configuration used when opening a bookmark.",
-  "settings.profile_id.label": "Default profile ID",
-  "settings.profile_id.description": "Optional profile ID from the selected browser configuration."
-}
-

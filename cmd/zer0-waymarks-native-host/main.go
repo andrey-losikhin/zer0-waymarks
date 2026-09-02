@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/zer0/zer0-waymarks/internal/bridge"
-	"github.com/zer0/zer0-waymarks/internal/nativehost"
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/bridge"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/nativehost"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 func main() {

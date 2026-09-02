@@ -1,40 +1,75 @@
 # Waymarks
 
-Waymarks searches and adds bookmarks stored by the local `zer0-waymarks-helper`.
-It does not read browser profile databases or send bookmark data over the network.
+Waymarks is a keyboard-first Noctalia interface for a local, browser-independent
+bookmark collection. Search, organize, and open bookmarks without sending data
+to a cloud service or reading browser profile databases.
+
+## Plugin
 
 | Field | Value |
 | --- | --- |
-| Plugin ID | `zer0/waymarks` |
-| Launcher | `/wm` |
-| Panel | `zer0/waymarks:panel` |
+| ID | `zer0/waymarks` |
+| Entries | Launcher: `search`; panel: `panel` |
+| Launcher Prefix | `/wm` |
+| License | Apache-2.0 |
 
 ## Requirements
 
-- `zer0-waymarks-helper` installed on `PATH`;
-- browser/profile IDs configured in the helper and selected in plugin settings.
+Install `zer0-waymarks-helper` on the `PATH` inherited by Noctalia. The helper
+and its source are available in the
+[zer0-waymarks repository](https://github.com/andrey-losikhin/zer0-waymarks).
 
 ## Usage
 
-- Type `/wm documentation` to search by title or URL. Selecting a result opens it
-  with the configured browser and optional profile.
-- Open the panel with `noctalia msg panel-toggle zer0/waymarks:panel` to search,
-  choose a configured browser/profile, add or edit an HTTP/HTTPS bookmark with
-  an optional local note, and delete one with an explicit second click. Search
-  matches title, URL, note and tags; notes/tags are not copied into browser bookmarks.
-- Use tags as sections such as `personal`, `work` and `project`; the section
-  dropdown filters results. One bookmark may belong to multiple sections.
-- Choose a detected browser and press **Set default** to persist it. Known local
-  browsers, including Helium, are discovered automatically.
-- The bookmark list is active when the panel opens. Typing filters immediately;
-  `Up`/`Down` changes the selected bookmark and `Enter` opens it. There is no
-  separate Search button.
-- Tabs: `Ctrl+1` bookmarks, `Ctrl+2` (or `Ctrl+N`) add form, `Ctrl+3` settings.
-  In bookmarks, `Ctrl+Up`/`Ctrl+Down` changes the section. In settings,
-  `Up`/`Down` chooses a browser, `Left`/`Right` chooses its profile, and `Enter`
-  saves the default browser. `Ctrl+Enter` saves the form; `Esc` returns to
-  bookmarks or closes the panel.
+Open the panel with:
 
-The plugin invokes the helper with an argument array, never through a shell command.
-URLs, titles, notes and result IDs remain separate argv values and are validated again by
-the helper.
+```sh
+noctalia msg panel-toggle zer0/waymarks:panel
+```
+
+The panel provides three tabs:
+
+- **Bookmarks** searches titles, URLs, optional notes, and tags as you type.
+- **Add** creates or edits an HTTP(S) bookmark with optional notes and tags.
+- **Settings** selects a detected browser and profile and persists the default
+  browser used on the next launch.
+
+Use tags as sections such as `personal`, `work`, or `project`. A bookmark may
+belong to multiple sections. Deletion requires an explicit second click.
+
+Type `/wm documentation` in the Noctalia launcher to search from anywhere.
+Activating a result opens it with the configured browser and optional profile.
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+| --- | --- |
+| Type | Filter bookmarks immediately |
+| `Up` / `Down` | Select a bookmark |
+| `Enter` | Open the selected bookmark |
+| `Ctrl+1` | Open Bookmarks |
+| `Ctrl+2` or `Ctrl+N` | Open Add |
+| `Ctrl+3` | Open Settings |
+| `Ctrl+Up` / `Ctrl+Down` | Change section |
+| `Ctrl+Enter` | Save the add/edit form |
+| `Escape` | Return to Bookmarks or close the panel |
+
+## Browser settings
+
+Use the panel's **Settings** tab to choose a browser and profile. The default
+browser is stored by the helper and is shared with the launcher; no duplicate
+Noctalia setting is required.
+
+The helper automatically detects common Linux browsers, including Firefox,
+Zen, LibreWolf, Floorp, Waterfox, Chromium, Chrome, Brave, Vivaldi, Opera, Edge,
+Thorium, and Helium. Explicit helper configuration takes priority.
+
+## Notes
+
+- Bookmark data remains in the user's XDG data directory.
+- Notes and tags are local Waymarks metadata and are not copied into browser
+  bookmark titles.
+- The plugin invokes the helper with an argument array, never through a shell
+  command.
+- Only HTTP(S) bookmark URLs are accepted by default.
+- This plugin does not require the optional browser synchronization extension.

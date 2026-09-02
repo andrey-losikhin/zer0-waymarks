@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/zer0/zer0-waymarks/internal/protocol"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/protocol"
 )
 
 func TestAddSearchReplayAndIdempotency(t *testing.T) {

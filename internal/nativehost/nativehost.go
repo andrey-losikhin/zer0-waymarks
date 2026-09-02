@@ -9,9 +9,9 @@ import (
 	"io"
 	"unicode/utf8"
 
-	"github.com/zer0/zer0-waymarks/internal/bridge"
-	"github.com/zer0/zer0-waymarks/internal/protocol"
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/bridge"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/protocol"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 const (

@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 const maxInputBytes = 16 * 1024 * 1024

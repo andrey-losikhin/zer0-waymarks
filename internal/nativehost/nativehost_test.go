@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/zer0/zer0-waymarks/internal/bridge"
-	"github.com/zer0/zer0-waymarks/internal/store"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/bridge"
+	"github.com/andrey-losikhin/zer0-waymarks/internal/store"
 )
 
 type fakeStore struct {
