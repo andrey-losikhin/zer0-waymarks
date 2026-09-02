@@ -16,6 +16,8 @@ versioned releases begin.
   persistent default browser.
 - Experimental Firefox Native Messaging synchronization bridge.
 - HTML bookmark import and export.
+- Existing-tag search and assignment in the add/edit form.
+- Per-bookmark browser/profile selection without changing the default browser.
 
 ### Security
 

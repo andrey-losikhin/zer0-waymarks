@@ -64,6 +64,7 @@ func TestPanelProvidesRequiredUserFlows(t *testing.T) {
 		`"--note"`, `"--tags"`, `"set-default-browser"`, `addNote`, `addTags`, `function onKey`, `"ctrl+n"`, `"ctrl+f"`,
 		`key = "status"`, `height = 20`, `viewMode == "bookmarks"`, `viewMode == "settings"`, `function startAdd`,
 		`function onQueryChanged`, `function selectTab`, `"ctrl+2"`, `"ctrl+3"`, `"Default browser: " .. defaultBrowserName()`,
+		`function toggleFormTag`, `function onTagSearchChanged`, `function openWithSelectedBrowser`, `openBookmark(openWithId, true)`,
 		`ui.input`, `ui.select`, `helper.openArguments`, `helper.operationId`,
 	} {
 		if !strings.Contains(panel, required) {

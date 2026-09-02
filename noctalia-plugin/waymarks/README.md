@@ -31,6 +31,8 @@ The panel provides three tabs:
 
 - **Bookmarks** searches titles, URLs, optional notes, and tags as you type.
 - **Add** creates or edits an HTTP(S) bookmark with optional notes and tags.
+  Existing tags can be searched and assigned without retyping them. New tags
+  are entered in the **Assigned tags** field.
 - **Settings** selects a detected browser and profile and persists the default
   browser used on the next launch.
 
@@ -39,6 +41,9 @@ belong to multiple sections. Deletion requires an explicit second click.
 
 Type `/wm documentation` in the Noctalia launcher to search from anywhere.
 Activating a result opens it with the configured browser and optional profile.
+The normal open action uses the default browser. Use the small **With…** action
+on a bookmark card to choose another browser/profile for that one launch without
+changing the default.
 
 ## Keyboard shortcuts
 

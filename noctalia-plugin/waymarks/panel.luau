@@ -7,6 +7,7 @@ local addTitle = ""
 local addUrl = ""
 local addNote = ""
 local addTags = ""
+local tagSearch = ""
 local bookmarks = {}
 local selectedIndex = 0
 local busy = false
@@ -29,6 +30,8 @@ local tagOptions = { "All sections" }
 local tagIndex = 0
 local focusArea = "search"
 local viewMode = "bookmarks"
+local openWithId = nil
+local panelSession = 0
 
 local function setMessage(text, isError)
   message = text or ""
@@ -51,17 +54,37 @@ local function clearForm()
   addUrl = ""
   addNote = ""
   addTags = ""
+  tagSearch = ""
   formRevision = formRevision + 1
 end
 
-local function openBookmark(id)
+local function selectedTagList()
+  local result = {}
+  for value in string.gmatch(addTags, "([^,]+)") do
+    local tag = noctalia.string.trim(value)
+    if tag ~= "" then table.insert(result, tag) end
+  end
+  return result
+end
+
+local function hasSelectedTag(tag)
+  local wanted = string.lower(tag)
+  for _, selectedTag in ipairs(selectedTagList()) do
+    if string.lower(selectedTag) == wanted then return true end
+  end
+  return false
+end
+
+local function openBookmark(id, useSelectedBrowser)
   if openingId == id then return end
+  local requestSession = panelSession
   openingId = id
-  local selectedBrowser = browsers[browserIndex + 1]
+  local selectedBrowser = useSelectedBrowser and browsers[browserIndex + 1] or nil
   local browserId = selectedBrowser and selectedBrowser.id or nil
   local selectedProfile = selectedBrowser and selectedBrowser.profiles and selectedBrowser.profiles[profileIndex] or nil
   local profileId = selectedProfile and selectedProfile.id or ""
   helper.run(helper.openArguments(id, browserId, profileId), function(_data, err)
+    if requestSession ~= panelSession then return end
     openingId = nil
     if err ~= nil then
       setMessage(err, true)
@@ -99,8 +122,15 @@ function renderPanel()
         ui.button({
           glyph = "external-link",
           variant = "ghost",
-          tooltip = "Open bookmark",
+          tooltip = "Open with default browser",
           onClick = function() openBookmark(bookmarkId) end,
+        }),
+        ui.button({
+          text = "With…",
+          variant = openWithId == bookmarkId and "primary" or "ghost",
+          tooltip = "Open with another browser",
+          enabled = not busy,
+          onClick = function() showOpenWith(bookmarkId) end,
         }),
         ui.button({
           glyph = "edit",
@@ -162,6 +192,19 @@ function renderPanel()
       }),
     }))
     table.insert(children, ui.label({ text = "Default browser: " .. defaultBrowserName(), color = "on_surface/0.60", maxLines = 1 }))
+    if openWithId ~= nil then
+      table.insert(children, ui.column({ gap = 6, padding = 8, radius = 8, fill = "on_surface/0.06" }, {
+        ui.row({ gap = 6, align = "center" }, {
+          ui.label({ text = "Open selected with", fontWeight = "bold", flexGrow = 1 }),
+          ui.button({ glyph = "x", variant = "ghost", tooltip = "Cancel", onClick = "cancelOpenWith" }),
+        }),
+        ui.row({ gap = 6 }, {
+          ui.select({ options = browserOptions, selectedIndex = browserIndex, placeholder = "Browser", enabled = #browserOptions > 0 and not busy, flexGrow = 1, onChange = "onBrowserChanged" }),
+          ui.select({ options = profileOptions, selectedIndex = profileIndex, placeholder = "Profile", enabled = #profileOptions > 1 and not busy, flexGrow = 1, onChange = "onProfileChanged" }),
+          ui.button({ text = "Open", glyph = "external-link", variant = "primary", enabled = #browserOptions > 0 and not busy, onClick = "openWithSelectedBrowser" }),
+        }),
+      }))
+    end
     table.insert(children, ui.select({
       options = tagOptions,
       selectedIndex = tagIndex,
@@ -232,10 +275,37 @@ function renderPanel()
     table.insert(children, ui.input({
       key = "tags-" .. tostring(formRevision),
       value = addTags,
-      placeholder = "Sections/tags: personal, work, project",
+      placeholder = "Assigned tags: personal, work, project",
       enabled = not busy,
-      onChange = function(value) addTags = value end,
+      onChange = "onFormTagsChanged",
     }))
+    table.insert(children, ui.input({
+      key = "tag-search-" .. tostring(formRevision),
+      value = tagSearch,
+      placeholder = "Find an existing tag…",
+      enabled = not busy,
+      onChange = "onTagSearchChanged",
+      onSubmit = "assignSearchedTag",
+    }))
+    local matchingTags = {}
+    local wantedTag = string.lower(noctalia.string.trim(tagSearch))
+    for index = 2, #tagOptions do
+      local existingTag = tagOptions[index]
+      if (wantedTag == "" or string.find(string.lower(existingTag), wantedTag, 1, true) ~= nil) and #matchingTags < 6 then
+        local candidateTag = existingTag
+        table.insert(matchingTags, ui.button({
+          text = (hasSelectedTag(candidateTag) and "✓  " or "+  ") .. candidateTag,
+          variant = hasSelectedTag(candidateTag) and "primary" or "ghost",
+          enabled = not busy,
+          onClick = function() toggleFormTag(candidateTag) end,
+        }))
+      end
+    end
+    if #matchingTags > 0 then
+      table.insert(children, ui.column({ gap = 4 }, matchingTags))
+    elseif wantedTag ~= "" then
+      table.insert(children, ui.label({ text = "No existing tags found. Add a new one in Assigned tags.", color = "on_surface/0.55", maxLines = 1 }))
+    end
     table.insert(children, ui.label({ text = "Tab changes fields · Ctrl+Enter saves · Esc returns to search", color = "on_surface/0.55", maxLines = 2 }))
     table.insert(children, ui.button({
       text = busy and "Working…" or (editId == nil and "Add bookmark" or "Save changes"),
@@ -258,6 +328,7 @@ function beginEdit(bookmark)
   addUrl = bookmark.url or ""
   addNote = bookmark.note or ""
   addTags = table.concat(bookmark.tags or {}, ", ")
+  tagSearch = ""
   viewMode = "add"
   focusArea = "form"
   formRevision = formRevision + 1
@@ -272,6 +343,7 @@ function startAdd()
   addUrl = ""
   addNote = ""
   addTags = ""
+  tagSearch = ""
   viewMode = "add"
   focusArea = "form"
   formRevision = formRevision + 1
@@ -294,9 +366,76 @@ function selectTab(tab)
     return
   end
   if viewMode == "add" then clearForm() end
+  openWithId = nil
   viewMode = tab
   focusArea = "search"
   setMessage("", false)
+  renderPanel()
+end
+
+function toggleFormTag(tag)
+  local tags = selectedTagList()
+  local wanted = string.lower(noctalia.string.trim(tag))
+  if wanted == "" then return end
+  local updated = {}
+  local removed = false
+  for _, selectedTag in ipairs(tags) do
+    if string.lower(selectedTag) == wanted then
+      removed = true
+    else
+      table.insert(updated, selectedTag)
+    end
+  end
+  if not removed then table.insert(updated, noctalia.string.trim(tag)) end
+  addTags = table.concat(updated, ", ")
+  tagSearch = ""
+  renderPanel()
+end
+
+function onTagSearchChanged(value)
+  tagSearch = type(value) == "string" and value or ""
+  renderPanel()
+end
+
+function onFormTagsChanged(value)
+  addTags = type(value) == "string" and value or ""
+  renderPanel()
+end
+
+function assignSearchedTag(value)
+  local candidate = noctalia.string.trim(type(value) == "string" and value or tagSearch)
+  if candidate == "" then return end
+  for index = 2, #tagOptions do
+    if string.lower(tagOptions[index]) == string.lower(candidate) then
+      toggleFormTag(tagOptions[index])
+      return
+    end
+  end
+  setMessage("Choose an existing tag; add new tags in Assigned tags", true)
+  renderPanel()
+end
+
+function showOpenWith(bookmarkId)
+  if busy then return end
+  openWithId = openWithId == bookmarkId and nil or bookmarkId
+  renderPanel()
+end
+
+function cancelOpenWith()
+  openWithId = nil
+  renderPanel()
+end
+
+function openWithSelectedBrowser()
+  if openWithId == nil or browsers[browserIndex + 1] == nil or busy then return end
+  for _, bookmark in ipairs(bookmarks) do
+    if bookmark.id == openWithId then
+      openBookmark(openWithId, true)
+      return
+    end
+  end
+  openWithId = nil
+  setMessage("Bookmark is no longer in the current results", true)
   renderPanel()
 end
 
@@ -354,6 +493,7 @@ end
 
 function onTagChanged(value)
   tagIndex = tonumber(value) or 0
+  openWithId = nil
   searchBookmarks()
 end
 
@@ -378,6 +518,7 @@ end
 
 function onQueryChanged(value)
   query = type(value) == "string" and value or ""
+  openWithId = nil
   viewMode = "bookmarks"
   searchBookmarks()
 end
@@ -441,6 +582,7 @@ local function loadBrowsers()
 end
 
 function searchBookmarks()
+  openWithId = nil
   searchGeneration = searchGeneration + 1
   local requestGeneration = searchGeneration
   busy = true
@@ -531,6 +673,7 @@ function saveBookmark()
     addUrl = ""
     addNote = ""
     addTags = ""
+    tagSearch = ""
     editId = nil
     editRevision = nil
     formRevision = formRevision + 1
@@ -542,14 +685,22 @@ function saveBookmark()
 end
 
 function onOpen(_context)
+  panelSession = panelSession + 1
   viewMode = "bookmarks"
   focusArea = "search"
   openingId = nil
+  openWithId = nil
   searchGeneration = searchGeneration + 1
   pendingSearch = false
   loadBrowsers()
   loadTags()
   searchBookmarks()
+end
+
+function onClose()
+  panelSession = panelSession + 1
+  openingId = nil
+  openWithId = nil
 end
 
 function onKey(chord, pressed)
@@ -573,6 +724,8 @@ function onKey(chord, pressed)
     if key == "down" then cycleBrowser(1) else cycleProfile(1) end
   elseif (key == "up" or key == "left") and viewMode == "settings" then
     if key == "up" then cycleBrowser(-1) else cycleProfile(-1) end
+  elseif (key == "return" or key == "enter") and viewMode == "bookmarks" and openWithId ~= nil then
+    openWithSelectedBrowser()
   elseif (key == "return" or key == "enter" or key == "ctrl+o") and viewMode == "bookmarks" and not busy and selectedIndex > 0 then
     openBookmark(bookmarks[selectedIndex].id)
   elseif (key == "return" or key == "enter") and viewMode == "settings" then

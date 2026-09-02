@@ -20,8 +20,11 @@ browser and profile you choose.
 - Search titles, URLs, notes, and tags from the Noctalia launcher or panel.
 - Add, edit, organize, and delete bookmarks without opening a browser.
 - Use tags as sections such as `personal`, `work`, or `project`.
+- Search and reuse existing tags while adding or editing a bookmark.
 - Detect common Linux browsers, including Firefox, Chromium, Brave, Zen, and
   Helium, then persist the default browser.
+- Open an individual bookmark with a different browser/profile without changing
+  the default.
 - Navigate the complete panel by keyboard.
 - Store data locally as versioned append-only JSON events plus an atomic
   snapshot—no account, cloud service, database, or telemetry.
