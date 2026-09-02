@@ -1,0 +1,42 @@
+id = "zer0/waymarks"
+name = "Waymarks"
+version = "0.1.0"
+plugin_api = 24
+author = "zer0"
+license = "MIT"
+dependencies = ["zer0-waymarks-helper"]
+tags = ["bookmarks", "launcher", "productivity"]
+icon = "bookmark"
+description = "Search and add bookmarks from a local browser-independent collection."
+
+[[setting]]
+key = "browser_id"
+type = "string"
+label_key = "settings.browser_id.label"
+description_key = "settings.browser_id.description"
+default = "firefox"
+
+[[setting]]
+key = "profile_id"
+type = "string"
+label_key = "settings.profile_id.label"
+description_key = "settings.profile_id.description"
+default = ""
+
+[[launcher_provider]]
+id = "search"
+entry = "launcher.luau"
+prefix = "wm"
+glyph = "bookmark"
+include_in_global_search = false
+debounce_ms = 100
+
+[[panel]]
+id = "panel"
+entry = "panel.luau"
+width = 560
+height = 620
+placement = "floating"
+position = "center"
+keyboard_focus = "exclusive"
+

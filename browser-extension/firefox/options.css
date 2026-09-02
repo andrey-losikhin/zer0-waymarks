@@ -1,0 +1,8 @@
+:root { color-scheme: light dark; font: message-box; }
+body { margin: 0; }
+main { max-width: 48rem; margin: 2rem auto; padding: 0 1rem; }
+section { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: .5rem; padding: 1rem; }
+button { margin: .35rem .35rem .35rem 0; padding: .45rem .75rem; }
+.candidate { display: block; width: 100%; text-align: left; }
+.error { color: #c33; }
+.ok { color: #298a46; }

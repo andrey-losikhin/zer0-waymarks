@@ -1,0 +1,9 @@
+{
+  "name": "zer0.waymarks",
+  "description": "Native Messaging host for zer0-waymarks",
+  "path": "/usr/lib/zer0-waymarks/zer0-waymarks-native-host",
+  "type": "stdio",
+  "allowed_extensions": [
+    "waymarks@zer0.local"
+  ]
+}

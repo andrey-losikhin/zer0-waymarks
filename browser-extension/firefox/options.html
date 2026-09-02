@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>zer0-waymarks</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>zer0-waymarks</h1>
+    <p id="native-status">Проверка Native Messaging…</p>
+    <section>
+      <h2>Папка Waymarks</h2>
+      <p id="folder-status">Поиск…</p>
+      <div id="candidates"></div>
+      <button id="create-folder" type="button" hidden>Создать папку Waymarks</button>
+      <button id="reset-folder" type="button" hidden>Выбрать другую папку</button>
+      <button id="preview" type="button" hidden>Показать dry-run reconcile</button>
+      <button id="apply" type="button" hidden>Применить lossless reconcile</button>
+      <button id="refresh" type="button">Обновить</button>
+      <pre id="preview-report" hidden></pre>
+    </section>
+  </main>
+  <script src="bookmark-tree.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

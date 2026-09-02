@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "zer0-waymarks (development)",
+  "version": "0.1.0",
+  "description": "Connects the managed Waymarks folder to the local zer0-waymarks store.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "waymarks@zer0.local"
+    }
+  },
+  "permissions": [
+    "alarms",
+    "bookmarks",
+    "nativeMessaging",
+    "storage"
+  ],
+  "background": {
+    "scripts": [
+      "native-client.js",
+      "background.js"
+    ]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  }
+}
