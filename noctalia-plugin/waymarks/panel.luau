@@ -13,6 +13,8 @@ local busy = false
 local message = ""
 local messageIsError = false
 local searchGeneration = 0
+local searchInFlight = false
+local pendingSearch = false
 local formRevision = 0
 local editId = nil
 local editRevision = nil
@@ -26,19 +28,41 @@ local profileIndex = 0
 local tagOptions = { "All sections" }
 local tagIndex = 0
 local focusArea = "search"
-local viewMode = "search"
+local viewMode = "bookmarks"
 
 local function setMessage(text, isError)
   message = text or ""
   messageIsError = isError == true
 end
 
+local openingId = nil
+
+local function defaultBrowserName()
+  for _, browser in ipairs(browsers) do
+    if browser.id == defaultBrowserId then return browser.name end
+  end
+  return defaultBrowserId ~= "" and defaultBrowserId or "Not selected"
+end
+
+local function clearForm()
+  editId = nil
+  editRevision = nil
+  addTitle = ""
+  addUrl = ""
+  addNote = ""
+  addTags = ""
+  formRevision = formRevision + 1
+end
+
 local function openBookmark(id)
+  if openingId == id then return end
+  openingId = id
   local selectedBrowser = browsers[browserIndex + 1]
   local browserId = selectedBrowser and selectedBrowser.id or nil
   local selectedProfile = selectedBrowser and selectedBrowser.profiles and selectedBrowser.profiles[profileIndex] or nil
   local profileId = selectedProfile and selectedProfile.id or ""
   helper.run(helper.openArguments(id, browserId, profileId), function(_data, err)
+    openingId = nil
     if err ~= nil then
       setMessage(err, true)
       renderPanel()
@@ -55,13 +79,27 @@ function renderPanel()
     local bookmarkId = rowBookmark.id
     local rowIndex = #resultRows + 1
     local selected = rowIndex == selectedIndex
-    table.insert(resultRows, ui.column({ key = bookmarkId, gap = 4, padding = 6, radius = 8, fill = selected and "primary/0.10" or "surface" }, {
-      ui.row({ gap = 6 }, {
-        ui.button({
+    table.insert(resultRows, ui.column({
+      key = bookmarkId,
+      gap = 4,
+      padding = 6,
+      radius = 8,
+      fill = selected and "primary/0.12" or "on_surface/0.06",
+      border = selected and "primary" or "on_surface/0.10",
+      borderWidth = 1,
+      onClick = function() openBookmark(bookmarkId) end,
+    }, {
+      ui.row({ gap = 6, align = "center" }, {
+        ui.label({
           text = rowBookmark.title ~= "" and rowBookmark.title or rowBookmark.url,
-          glyph = "external-link",
-          contentAlign = "start",
+          fontWeight = "bold",
           flexGrow = 1,
+          maxLines = 1,
+        }),
+        ui.button({
+          glyph = "external-link",
+          variant = "ghost",
+          tooltip = "Open bookmark",
           onClick = function() openBookmark(bookmarkId) end,
         }),
         ui.button({
@@ -79,9 +117,11 @@ function renderPanel()
           onClick = function() requestDelete(rowBookmark) end,
         }),
       }),
-      ui.label({ text = rowBookmark.url, color = "on_surface/0.65", maxLines = 1 }),
+      ui.row({ gap = 10, align = "center" }, {
+        ui.label({ text = rowBookmark.url, color = "on_surface/0.65", maxLines = 1, flexGrow = 1 }),
+        ui.label({ text = table.concat(rowBookmark.tags or {}, " · "), color = "primary", maxLines = 1, visible = #(rowBookmark.tags or {}) > 0 }),
+      }),
       ui.label({ text = rowBookmark.note or "", color = "on_surface/0.55", maxLines = 2, visible = (rowBookmark.note or "") ~= "" }),
-      ui.label({ text = table.concat(rowBookmark.tags or {}, " · "), color = "primary", maxLines = 1, visible = #(rowBookmark.tags or {}) > 0 }),
     }))
   end
   if #resultRows == 0 then
@@ -97,45 +137,31 @@ function renderPanel()
       height = 20,
       maxLines = 1,
     }),
+    ui.row({ gap = 6 }, {
+      ui.button({ text = "1  Bookmarks", glyph = "bookmark", variant = viewMode == "bookmarks" and "primary" or "ghost", flexGrow = 1, onClick = function() selectTab("bookmarks") end }),
+      ui.button({ text = "2  Add", glyph = "bookmark-plus", variant = viewMode == "add" and "primary" or "ghost", flexGrow = 1, onClick = function() selectTab("add") end }),
+      ui.button({ text = "3  Settings", glyph = "settings", variant = viewMode == "settings" and "primary" or "ghost", flexGrow = 1, onClick = function() selectTab("settings") end }),
+    }),
   }
 
-  if viewMode == "search" then
+  if viewMode == "bookmarks" then
     table.insert(children, ui.row({ gap = 8 }, {
       ui.input({
         key = "search",
         value = query,
-        placeholder = "Search title, URL or note",
-        focus = focusArea == "search",
+        placeholder = "Type to filter bookmarks…",
+        focus = true,
         flexGrow = 1,
-        onChange = function(value) query = value end,
-        onSubmit = function(value) query = value; searchBookmarks() end,
-      }),
-      ui.button({ text = "Search", glyph = "search", enabled = not busy, onClick = "searchBookmarks" }),
-    }))
-    table.insert(children, ui.row({ gap = 8 }, {
-      ui.select({
-        options = browserOptions,
-        selectedIndex = browserIndex,
-        placeholder = "Browser",
-        enabled = #browserOptions > 0 and not busy,
-        flexGrow = 1,
-        onChange = "onBrowserChanged",
-      }),
-      ui.select({
-        options = profileOptions,
-        selectedIndex = profileIndex,
-        placeholder = "Profile",
-        enabled = #profileOptions > 1 and not busy,
-        flexGrow = 1,
-        onChange = "onProfileChanged",
-      }),
-      ui.button({
-        text = (browsers[browserIndex + 1] and browsers[browserIndex + 1].id == defaultBrowserId) and "Default" or "Set default",
-        glyph = (browsers[browserIndex + 1] and browsers[browserIndex + 1].id == defaultBrowserId) and "circle-check" or "circle",
-        enabled = #browserOptions > 0 and not busy,
-        onClick = "setDefaultBrowser",
+        onChange = "onQueryChanged",
+        onSubmit = function(value)
+          query = value
+          if not busy and selectedIndex > 0 and bookmarks[selectedIndex] ~= nil then
+            openBookmark(bookmarks[selectedIndex].id)
+          end
+        end,
       }),
     }))
+    table.insert(children, ui.label({ text = "Default browser: " .. defaultBrowserName(), color = "on_surface/0.60", maxLines = 1 }))
     table.insert(children, ui.select({
       options = tagOptions,
       selectedIndex = tagIndex,
@@ -144,14 +170,37 @@ function renderPanel()
       onChange = "onTagChanged",
     }))
     table.insert(children, ui.scroll({ flexGrow = 1, gap = 8 }, resultRows))
-    table.insert(children, ui.label({ text = "Ctrl+F search · Ctrl+N add · ↑/↓ select · Ctrl+O open · Esc close", color = "on_surface/0.55", maxLines = 2 }))
-    table.insert(children, ui.button({
-      text = "Add bookmark",
-      glyph = "bookmark-plus",
-      variant = "primary",
-      enabled = not busy,
-      onClick = "startAdd",
+    table.insert(children, ui.label({
+      text = "↑/↓ Select · Enter Open · Ctrl+↑/↓ Section · Ctrl+2 Add · Ctrl+3 Settings",
+      color = "on_surface/0.55",
+      height = 20,
+      maxLines = 1,
     }))
+  elseif viewMode == "settings" then
+    table.insert(children, ui.label({ text = "Default browser", fontSize = 18, fontWeight = "bold" }))
+    table.insert(children, ui.select({
+      options = browserOptions,
+      selectedIndex = browserIndex,
+      placeholder = "Browser",
+      enabled = #browserOptions > 0 and not busy,
+      onChange = "onBrowserChanged",
+    }))
+    table.insert(children, ui.select({
+      options = profileOptions,
+      selectedIndex = profileIndex,
+      placeholder = "Profile",
+      enabled = #profileOptions > 1 and not busy,
+      onChange = "onProfileChanged",
+    }))
+    table.insert(children, ui.button({
+      text = (browsers[browserIndex + 1] and browsers[browserIndex + 1].id == defaultBrowserId) and "Current default" or "Set as default",
+      glyph = (browsers[browserIndex + 1] and browsers[browserIndex + 1].id == defaultBrowserId) and "circle-check" or "circle",
+      variant = "primary",
+      enabled = #browserOptions > 0 and not busy,
+      onClick = "setDefaultBrowser",
+    }))
+    table.insert(children, ui.label({ text = "↑/↓ browser · ←/→ profile · Enter saves default · Ctrl+1 bookmarks", color = "on_surface/0.55", maxLines = 2 }))
+    table.insert(children, ui.spacer({ flexGrow = 1 }))
   else
     table.insert(children, ui.row({ align = "center", gap = 8 }, {
       ui.label({ text = editId == nil and "Add bookmark" or "Edit bookmark", fontSize = 18, fontWeight = "bold", flexGrow = 1 }),
@@ -198,7 +247,7 @@ function renderPanel()
     table.insert(children, ui.spacer({ flexGrow = 1 }))
   end
 
-  panel.render(ui.column({ padding = 16, gap = 10, fill = "surface" }, children))
+  panel.render(ui.column({ padding = 16, gap = 10, fill = "surface", flexGrow = 1, align = "stretch" }, children))
 end
 
 function beginEdit(bookmark)
@@ -209,7 +258,7 @@ function beginEdit(bookmark)
   addUrl = bookmark.url or ""
   addNote = bookmark.note or ""
   addTags = table.concat(bookmark.tags or {}, ", ")
-  viewMode = "form"
+  viewMode = "add"
   focusArea = "form"
   formRevision = formRevision + 1
   setMessage("", false)
@@ -223,7 +272,7 @@ function startAdd()
   addUrl = ""
   addNote = ""
   addTags = ""
-  viewMode = "form"
+  viewMode = "add"
   focusArea = "form"
   formRevision = formRevision + 1
   setMessage("", false)
@@ -231,15 +280,22 @@ function startAdd()
 end
 
 function cancelEdit()
-  editId = nil
-  editRevision = nil
-  addTitle = ""
-  addUrl = ""
-  addNote = ""
-  addTags = ""
-  viewMode = "search"
+  clearForm()
+  viewMode = "bookmarks"
   focusArea = "search"
-  formRevision = formRevision + 1
+  setMessage("", false)
+  renderPanel()
+end
+
+function selectTab(tab)
+  if tab ~= "bookmarks" and tab ~= "add" and tab ~= "settings" then return end
+  if tab == "add" then
+    startAdd()
+    return
+  end
+  if viewMode == "add" then clearForm() end
+  viewMode = tab
+  focusArea = "search"
   setMessage("", false)
   renderPanel()
 end
@@ -298,6 +354,31 @@ end
 
 function onTagChanged(value)
   tagIndex = tonumber(value) or 0
+  searchBookmarks()
+end
+
+local function cycleBrowser(delta)
+  if #browsers == 0 then return end
+  browserIndex = (browserIndex + delta) % #browsers
+  rebuildProfiles()
+  renderPanel()
+end
+
+local function cycleProfile(delta)
+  if #profileOptions == 0 then return end
+  profileIndex = (profileIndex + delta) % #profileOptions
+  renderPanel()
+end
+
+local function cycleTag(delta)
+  if #tagOptions == 0 then return end
+  tagIndex = (tagIndex + delta) % #tagOptions
+  searchBookmarks()
+end
+
+function onQueryChanged(value)
+  query = type(value) == "string" and value or ""
+  viewMode = "bookmarks"
   searchBookmarks()
 end
 
@@ -370,15 +451,27 @@ function searchBookmarks()
   searchGeneration = searchGeneration + 1
   local requestGeneration = searchGeneration
   busy = true
+  bookmarks = {}
+  selectedIndex = 0
   setMessage("", false)
   renderPanel()
+  if searchInFlight then
+    pendingSearch = true
+    return
+  end
+  searchInFlight = true
   local arguments = { "list", "--query", noctalia.string.trim(query), "--limit", "50", "--json" }
   if tagIndex > 0 and tagOptions[tagIndex + 1] ~= nil then
     table.insert(arguments, #arguments, "--tag")
     table.insert(arguments, #arguments, tagOptions[tagIndex + 1])
   end
   helper.run(arguments, function(data, err)
-    if requestGeneration ~= searchGeneration then return end
+    searchInFlight = false
+    if requestGeneration ~= searchGeneration or pendingSearch then
+      pendingSearch = false
+      searchBookmarks()
+      return
+    end
     busy = false
     if err ~= nil then
       bookmarks = {}
@@ -386,6 +479,7 @@ function searchBookmarks()
     else
       bookmarks = data.bookmarks or {}
       selectedIndex = #bookmarks > 0 and 1 or 0
+      if #bookmarks == 0 then focusArea = "search" end
     end
     renderPanel()
   end)
@@ -448,15 +542,18 @@ function saveBookmark()
     editRevision = nil
     formRevision = formRevision + 1
     setMessage("Bookmark saved", false)
-    viewMode = "search"
+    viewMode = "bookmarks"
     focusArea = "search"
     loadTags(function() searchBookmarks() end)
   end)
 end
 
 function onOpen(_context)
-  viewMode = "search"
+  viewMode = "bookmarks"
   focusArea = "search"
+  openingId = nil
+  searchGeneration = searchGeneration + 1
+  pendingSearch = false
   loadBrowsers()
   loadTags()
   searchBookmarks()
@@ -465,23 +562,31 @@ end
 function onKey(chord, pressed)
   if not pressed then return end
   local key = tostring(chord):lower()
-  if key == "ctrl+f" then
-    if viewMode == "form" then
-      cancelEdit()
-    else
-      focusArea = "search"; formRevision = formRevision + 1; renderPanel()
-    end
-  elseif key == "ctrl+n" then
-    startAdd()
-  elseif key == "down" and #bookmarks > 0 then
+  if key == "ctrl+1" or key == "ctrl+f" then
+    selectTab("bookmarks")
+  elseif key == "ctrl+2" or key == "ctrl+n" then
+    selectTab("add")
+  elseif key == "ctrl+3" then
+    selectTab("settings")
+  elseif key == "down" and viewMode == "bookmarks" and #bookmarks > 0 then
     selectedIndex = selectedIndex % #bookmarks + 1; renderPanel()
-  elseif key == "up" and #bookmarks > 0 then
+  elseif key == "up" and viewMode == "bookmarks" and #bookmarks > 0 then
     selectedIndex = (selectedIndex - 2) % #bookmarks + 1; renderPanel()
-  elseif key == "ctrl+o" and selectedIndex > 0 and focusArea == "search" then
+  elseif key == "ctrl+down" and viewMode == "bookmarks" then
+    cycleTag(1)
+  elseif key == "ctrl+up" and viewMode == "bookmarks" then
+    cycleTag(-1)
+  elseif (key == "down" or key == "right") and viewMode == "settings" then
+    if key == "down" then cycleBrowser(1) else cycleProfile(1) end
+  elseif (key == "up" or key == "left") and viewMode == "settings" then
+    if key == "up" then cycleBrowser(-1) else cycleProfile(-1) end
+  elseif (key == "return" or key == "enter" or key == "ctrl+o") and viewMode == "bookmarks" and not busy and selectedIndex > 0 then
     openBookmark(bookmarks[selectedIndex].id)
-  elseif key == "ctrl+return" or key == "ctrl+enter" then
+  elseif (key == "return" or key == "enter") and viewMode == "settings" then
+    setDefaultBrowser()
+  elseif (key == "ctrl+return" or key == "ctrl+enter") and viewMode == "add" then
     saveBookmark()
   elseif key == "escape" then
-    if viewMode == "form" then cancelEdit() else panel.close() end
+    if viewMode == "bookmarks" then panel.close() else selectTab("bookmarks") end
   end
 end

@@ -54,15 +54,25 @@ func TestScriptsNeverUseShellCommandStrings(t *testing.T) {
 
 func TestPanelProvidesRequiredUserFlows(t *testing.T) {
 	panel := read(t, "panel.luau")
+	manifest := read(t, "plugin.toml")
+	for _, required := range []string{`capture_keys`, `"Ctrl+1"`, `"Ctrl+2"`, `"Ctrl+3"`, `"Ctrl+Enter"`, `"Up"`, `"Down"`, `"Enter"`, `"Escape"`} {
+		if !strings.Contains(manifest, required) {
+			t.Errorf("manifest missing keyboard capture %q", required)
+		}
+	}
 	for _, required := range []string{
 		`"list", "--query"`, `"add", "--url"`, `"update", editId`, `"remove", bookmark.id`, `"browsers", "--json"`,
 		`"--note"`, `"--tags"`, `"set-default-browser"`, `addNote`, `addTags`, `function onKey`, `"ctrl+n"`, `"ctrl+f"`,
-		`key = "status"`, `height = 20`, `viewMode == "search"`, `function startAdd`,
+		`key = "status"`, `height = 20`, `viewMode == "bookmarks"`, `viewMode == "settings"`, `function startAdd`,
+		`function onQueryChanged`, `function selectTab`, `"ctrl+2"`, `"ctrl+3"`, `"Default browser: " .. defaultBrowserName()`,
 		`ui.input`, `ui.select`, `helper.openArguments`, `helper.operationId`,
 	} {
 		if !strings.Contains(panel, required) {
 			t.Errorf("panel missing flow marker %q", required)
 		}
+	}
+	if strings.Contains(panel, `onClick = "searchBookmarks"`) {
+		t.Error("panel still renders an explicit search button")
 	}
 	launcher := read(t, "launcher.luau")
 	for _, required := range []string{`function onQuery`, `function onActivate`, `helper.openArguments`} {

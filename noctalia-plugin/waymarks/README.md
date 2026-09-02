@@ -26,8 +26,14 @@ It does not read browser profile databases or send bookmark data over the networ
   dropdown filters results. One bookmark may belong to multiple sections.
 - Choose a detected browser and press **Set default** to persist it. Known local
   browsers, including Helium, are discovered automatically.
-- Keyboard: `Ctrl+F` search, `Ctrl+N` add form, arrows select a result, `Ctrl+O`
-  opens it, `Ctrl+Enter` saves, and `Esc` cancels editing or closes the panel.
+- The bookmark list is active when the panel opens. Typing filters immediately;
+  `Up`/`Down` changes the selected bookmark and `Enter` opens it. There is no
+  separate Search button.
+- Tabs: `Ctrl+1` bookmarks, `Ctrl+2` (or `Ctrl+N`) add form, `Ctrl+3` settings.
+  In bookmarks, `Ctrl+Up`/`Ctrl+Down` changes the section. In settings,
+  `Up`/`Down` chooses a browser, `Left`/`Right` chooses its profile, and `Enter`
+  saves the default browser. `Ctrl+Enter` saves the form; `Esc` returns to
+  bookmarks or closes the panel.
 
 The plugin invokes the helper with an argument array, never through a shell command.
 URLs, titles, notes and result IDs remain separate argv values and are validated again by

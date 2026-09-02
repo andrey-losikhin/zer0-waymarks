@@ -35,8 +35,12 @@ debounce_ms = 100
 id = "panel"
 entry = "panel.luau"
 width = 560
-height = 620
+height = 720
 placement = "floating"
 position = "center"
 keyboard_focus = "exclusive"
-
+capture_keys = [
+  "Up", "Down", "Left", "Right", "Return", "Enter", "Escape",
+  "Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+N", "Ctrl+F", "Ctrl+O",
+  "Ctrl+Up", "Ctrl+Down", "Ctrl+Return", "Ctrl+Enter",
+]
