@@ -97,10 +97,11 @@ end
 
 function renderPanel()
   local resultRows = {}
-  for _, bookmark in ipairs(bookmarks) do
+  for offset = 0, #bookmarks - 1 do
+    local rowIndex = (selectedIndex + offset - 1) % #bookmarks + 1
+    local bookmark = bookmarks[rowIndex]
     local rowBookmark = bookmark
     local bookmarkId = rowBookmark.id
-    local rowIndex = #resultRows + 1
     local selected = rowIndex == selectedIndex
     table.insert(resultRows, ui.column({
       key = bookmarkId,
@@ -120,12 +121,14 @@ function renderPanel()
           maxLines = 1,
         }),
         ui.button({
+          key = "open-" .. bookmarkId,
           glyph = "external-link",
           variant = "ghost",
           tooltip = "Open with default browser",
           onClick = function() openBookmark(bookmarkId) end,
         }),
         ui.button({
+          key = "open-with-" .. bookmarkId,
           text = "With…",
           variant = openWithId == bookmarkId and "primary" or "ghost",
           tooltip = "Open with another browser",
@@ -133,6 +136,7 @@ function renderPanel()
           onClick = function() showOpenWith(bookmarkId) end,
         }),
         ui.button({
+          key = "edit-" .. bookmarkId,
           glyph = "edit",
           variant = "ghost",
           tooltip = "Edit bookmark",
@@ -140,6 +144,7 @@ function renderPanel()
           onClick = function() beginEdit(rowBookmark) end,
         }),
         ui.button({
+          key = "delete-" .. bookmarkId,
           glyph = "trash",
           variant = deletePendingId == bookmarkId and "destructive" or "ghost",
           tooltip = deletePendingId == bookmarkId and "Press again to delete" or "Delete bookmark",
@@ -212,7 +217,11 @@ function renderPanel()
       enabled = not busy,
       onChange = "onTagChanged",
     }))
-    table.insert(children, ui.scroll({ flexGrow = 1, gap = 8 }, resultRows))
+    table.insert(children, ui.scroll({
+      key = "bookmark-scroll",
+      flexGrow = 1,
+      gap = 8,
+    }, resultRows))
     table.insert(children, ui.label({
       text = "↑/↓ Select · Enter Open · Ctrl+↑/↓ Section · Ctrl+2 Add · Ctrl+3 Settings",
       color = "on_surface/0.55",

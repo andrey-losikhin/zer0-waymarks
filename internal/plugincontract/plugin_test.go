@@ -65,6 +65,8 @@ func TestPanelProvidesRequiredUserFlows(t *testing.T) {
 		`key = "status"`, `height = 20`, `viewMode == "bookmarks"`, `viewMode == "settings"`, `function startAdd`,
 		`function onQueryChanged`, `function selectTab`, `"ctrl+2"`, `"ctrl+3"`, `"Default browser: " .. defaultBrowserName()`,
 		`function toggleFormTag`, `function onTagSearchChanged`, `function openWithSelectedBrowser`, `openBookmark(openWithId, true)`,
+		`for offset = 0, #bookmarks - 1 do`, `(selectedIndex + offset - 1) % #bookmarks + 1`, `key = "bookmark-scroll"`,
+		`key = "open-" .. bookmarkId`, `key = "open-with-" .. bookmarkId`, `key = "edit-" .. bookmarkId`, `key = "delete-" .. bookmarkId`,
 		`ui.input`, `ui.select`, `helper.openArguments`, `helper.operationId`,
 	} {
 		if !strings.Contains(panel, required) {
