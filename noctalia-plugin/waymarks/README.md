@@ -55,6 +55,8 @@ changing the default.
 | `Ctrl+1` | Open Bookmarks |
 | `Ctrl+2` or `Ctrl+N` | Open Add |
 | `Ctrl+3` | Open Settings |
+| `Ctrl+T` | Open the searchable tag picker |
+| `Ctrl+Shift+T` | Clear the active tag filter |
 | `Ctrl+Up` / `Ctrl+Down` | Change section |
 | `Ctrl+Enter` | Save the add/edit form |
 | `Escape` | Return to Bookmarks or close the panel |

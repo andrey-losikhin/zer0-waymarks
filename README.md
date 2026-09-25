@@ -85,6 +85,8 @@ to start Noctalia.
 | `Ctrl+1` | Bookmarks |
 | `Ctrl+2` or `Ctrl+N` | Add bookmark |
 | `Ctrl+3` | Browser settings |
+| `Ctrl+T` | Open searchable tag picker |
+| `Ctrl+Shift+T` | Clear the active tag filter |
 | `Ctrl+Up` / `Ctrl+Down` | Change section |
 | `Ctrl+Enter` | Save the add/edit form |
 | `Escape` | Return to bookmarks or close the panel |

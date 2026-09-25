@@ -28,6 +28,10 @@ local profileOptions = { "Default profile" }
 local profileIndex = 0
 local tagOptions = { "All sections" }
 local tagIndex = 0
+local tagPickerOpen = false
+local tagPickerQuery = ""
+local tagPickerIndex = 1
+local TAG_PICKER_LIMIT = 50
 local focusArea = "search"
 local viewMode = "bookmarks"
 local openWithId = nil
@@ -39,6 +43,19 @@ local function setMessage(text, isError)
 end
 
 local openingId = nil
+
+local function filteredTagChoices()
+  local choices = {}
+  local wanted = string.lower(noctalia.string.trim(tagPickerQuery))
+  for optionIndex = 2, #tagOptions do
+    local tag = tagOptions[optionIndex]
+    if wanted == "" or string.find(string.lower(tag), wanted, 1, true) ~= nil then
+      if #choices >= TAG_PICKER_LIMIT then return choices, true end
+      table.insert(choices, { tag = tag, optionIndex = optionIndex })
+    end
+  end
+  return choices, false
+end
 
 local function defaultBrowserName()
   for _, browser in ipairs(browsers) do
@@ -210,20 +227,91 @@ function renderPanel()
         }),
       }))
     end
-    table.insert(children, ui.select({
-      options = tagOptions,
-      selectedIndex = tagIndex,
-      placeholder = "Section",
-      enabled = not busy,
-      onChange = "onTagChanged",
+    table.insert(children, ui.row({ gap = 6 }, {
+      ui.select({
+        options = tagOptions,
+        selectedIndex = tagIndex,
+        placeholder = "Section",
+        enabled = not busy,
+        flexGrow = 1,
+        onChange = "onTagChanged",
+      }),
+      ui.button({
+        key = "tag-picker-toggle",
+        text = "Find tag",
+        glyph = "tags",
+        variant = tagPickerOpen and "primary" or "ghost",
+        tooltip = "Search tags (Ctrl+T)",
+        enabled = not busy,
+        onClick = "toggleTagPicker",
+      }),
+      ui.button({
+        key = "tag-filter-clear",
+        glyph = "filter-x",
+        variant = "ghost",
+        tooltip = "Clear tag filter (Ctrl+Shift+T)",
+        visible = tagIndex > 0,
+        enabled = not busy,
+        onClick = "clearTagFilter",
+      }),
     }))
+    if tagPickerOpen then
+      local tagChoices, tagChoicesTruncated = filteredTagChoices()
+      local tagRows = {}
+      for offset = 0, #tagChoices - 1 do
+        local choiceIndex = (tagPickerIndex + offset - 1) % #tagChoices + 1
+        local choice = tagChoices[choiceIndex]
+        local selectedChoice = choiceIndex == tagPickerIndex
+        local rowChoice = choice
+        table.insert(tagRows, ui.button({
+          key = "tag-choice-" .. rowChoice.tag,
+          text = (selectedChoice and "›  " or "   ") .. rowChoice.tag,
+          variant = selectedChoice and "primary" or "ghost",
+          contentAlign = "start",
+          onClick = function() selectTagChoice(rowChoice.optionIndex) end,
+        }))
+      end
+      if #tagRows == 0 then
+        table.insert(tagRows, ui.label({ text = "No matching tags", color = "on_surface/0.55" }))
+      end
+      table.insert(children, ui.column({
+        key = "tag-picker",
+        gap = 6,
+        padding = 8,
+        radius = 8,
+        fill = "on_surface/0.06",
+        border = "primary/0.35",
+        borderWidth = 1,
+      }, {
+        ui.input({
+          key = "tag-picker-search",
+          value = tagPickerQuery,
+          placeholder = "Search tags…",
+          focus = true,
+          onChange = "onTagPickerQueryChanged",
+          onSubmit = "applyTagPickerSelection",
+        }),
+        ui.scroll({ key = "tag-picker-results-" .. tostring(tagPickerIndex), height = 180, gap = 4 }, tagRows),
+        ui.label({
+          text = "Showing first " .. tostring(TAG_PICKER_LIMIT) .. " matches; type to narrow",
+          color = "on_surface/0.55",
+          visible = tagChoicesTruncated,
+          maxLines = 1,
+        }),
+        ui.label({
+          text = "↑/↓ Select · Enter Apply · Esc Close · Ctrl+Shift+T Clear",
+          color = "on_surface/0.55",
+          maxLines = 1,
+        }),
+      }))
+    end
     table.insert(children, ui.scroll({
       key = "bookmark-scroll",
       flexGrow = 1,
       gap = 8,
     }, resultRows))
     table.insert(children, ui.label({
-      text = "↑/↓ Select · Enter Open · Ctrl+↑/↓ Section · Ctrl+2 Add · Ctrl+3 Settings",
+      text = "↑/↓ Select · Enter Open · Ctrl+T Tags · Ctrl+Shift+T Clear tag",
       color = "on_surface/0.55",
       height = 20,
       maxLines = 1,
@@ -376,6 +464,7 @@ function selectTab(tab)
   end
   if viewMode == "add" then clearForm() end
   openWithId = nil
+  tagPickerOpen = false
   viewMode = tab
   focusArea = "search"
   setMessage("", false)
@@ -502,8 +591,49 @@ end
 
 function onTagChanged(value)
   tagIndex = tonumber(value) or 0
+  tagPickerOpen = false
   openWithId = nil
   searchBookmarks()
+end
+
+function toggleTagPicker()
+  if busy or viewMode ~= "bookmarks" then return end
+  tagPickerOpen = not tagPickerOpen
+  tagPickerQuery = ""
+  tagPickerIndex = math.max(1, tagIndex)
+  renderPanel()
+end
+
+function onTagPickerQueryChanged(value)
+  tagPickerQuery = type(value) == "string" and value or ""
+  tagPickerIndex = 1
+  renderPanel()
+end
+
+function selectTagChoice(optionIndex)
+  if busy or tagOptions[optionIndex] == nil then return end
+  tagIndex = optionIndex - 1
+  tagPickerOpen = false
+  tagPickerQuery = ""
+  openWithId = nil
+  searchBookmarks()
+end
+
+function applyTagPickerSelection(_value)
+  local choices = filteredTagChoices()
+  local choice = choices[tagPickerIndex]
+  if choice == nil then return end
+  selectTagChoice(choice.optionIndex)
+end
+
+function clearTagFilter()
+  if busy then return end
+  local hadFilter = tagIndex > 0
+  tagIndex = 0
+  tagPickerOpen = false
+  tagPickerQuery = ""
+  openWithId = nil
+  if hadFilter then searchBookmarks() else renderPanel() end
 end
 
 local function cycleBrowser(delta)
@@ -528,6 +658,8 @@ end
 function onQueryChanged(value)
   query = type(value) == "string" and value or ""
   openWithId = nil
+  tagPickerOpen = false
+  tagPickerQuery = ""
   viewMode = "bookmarks"
   searchBookmarks()
 end
@@ -699,6 +831,8 @@ function onOpen(_context)
   focusArea = "search"
   openingId = nil
   openWithId = nil
+  tagPickerOpen = false
+  tagPickerQuery = ""
   searchGeneration = searchGeneration + 1
   pendingSearch = false
   loadBrowsers()
@@ -710,6 +844,7 @@ function onClose()
   panelSession = panelSession + 1
   openingId = nil
   openWithId = nil
+  tagPickerOpen = false
 end
 
 function onKey(chord, pressed)
@@ -721,6 +856,18 @@ function onKey(chord, pressed)
     selectTab("add")
   elseif key == "ctrl+3" then
     selectTab("settings")
+  elseif key == "ctrl+shift+t" and viewMode == "bookmarks" then
+    clearTagFilter()
+  elseif key == "ctrl+t" and viewMode == "bookmarks" then
+    toggleTagPicker()
+  elseif key == "down" and viewMode == "bookmarks" and tagPickerOpen then
+    local choices = filteredTagChoices()
+    if #choices > 0 then tagPickerIndex = tagPickerIndex % #choices + 1; renderPanel() end
+  elseif key == "up" and viewMode == "bookmarks" and tagPickerOpen then
+    local choices = filteredTagChoices()
+    if #choices > 0 then tagPickerIndex = (tagPickerIndex - 2) % #choices + 1; renderPanel() end
+  elseif (key == "return" or key == "enter") and viewMode == "bookmarks" and tagPickerOpen then
+    applyTagPickerSelection()
   elseif key == "down" and viewMode == "bookmarks" and #bookmarks > 0 then
     selectedIndex = selectedIndex % #bookmarks + 1; renderPanel()
   elseif key == "up" and viewMode == "bookmarks" and #bookmarks > 0 then
@@ -742,6 +889,10 @@ function onKey(chord, pressed)
   elseif (key == "ctrl+return" or key == "ctrl+enter") and viewMode == "add" then
     saveBookmark()
   elseif key == "escape" then
-    if viewMode == "bookmarks" then panel.close() else selectTab("bookmarks") end
+    if tagPickerOpen then
+      tagPickerOpen = false
+      tagPickerQuery = ""
+      renderPanel()
+    elseif viewMode == "bookmarks" then panel.close() else selectTab("bookmarks") end
   end
 end

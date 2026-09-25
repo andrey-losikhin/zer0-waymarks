@@ -28,5 +28,5 @@ keyboard_focus = "exclusive"
 capture_keys = [
   "Up", "Down", "Left", "Right", "Return", "Enter", "Escape",
   "Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+N", "Ctrl+F", "Ctrl+O",
-  "Ctrl+Up", "Ctrl+Down", "Ctrl+Return", "Ctrl+Enter",
+  "Ctrl+T", "Ctrl+Shift+T", "Ctrl+Up", "Ctrl+Down", "Ctrl+Return", "Ctrl+Enter",
 ]

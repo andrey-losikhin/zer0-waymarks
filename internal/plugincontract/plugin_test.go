@@ -54,7 +54,7 @@ func TestScriptsNeverUseShellCommandStrings(t *testing.T) {
 func TestPanelProvidesRequiredUserFlows(t *testing.T) {
 	panel := read(t, "panel.luau")
 	manifest := read(t, "plugin.toml")
-	for _, required := range []string{`capture_keys`, `"Ctrl+1"`, `"Ctrl+2"`, `"Ctrl+3"`, `"Ctrl+Enter"`, `"Up"`, `"Down"`, `"Enter"`, `"Escape"`} {
+	for _, required := range []string{`capture_keys`, `"Ctrl+1"`, `"Ctrl+2"`, `"Ctrl+3"`, `"Ctrl+T"`, `"Ctrl+Shift+T"`, `"Ctrl+Enter"`, `"Up"`, `"Down"`, `"Enter"`, `"Escape"`} {
 		if !strings.Contains(manifest, required) {
 			t.Errorf("manifest missing keyboard capture %q", required)
 		}
@@ -67,6 +67,12 @@ func TestPanelProvidesRequiredUserFlows(t *testing.T) {
 		`function toggleFormTag`, `function onTagSearchChanged`, `function openWithSelectedBrowser`, `openBookmark(openWithId, true)`,
 		`for offset = 0, #bookmarks - 1 do`, `(selectedIndex + offset - 1) % #bookmarks + 1`, `key = "bookmark-scroll"`,
 		`key = "open-" .. bookmarkId`, `key = "open-with-" .. bookmarkId`, `key = "edit-" .. bookmarkId`, `key = "delete-" .. bookmarkId`,
+		`function filteredTagChoices`, `function toggleTagPicker`, `function onTagPickerQueryChanged`, `function applyTagPickerSelection`,
+		`function selectTagChoice`, `function clearTagFilter`, `key = "tag-picker-search"`, `key = "tag-picker-results-" .. tostring(tagPickerIndex)`,
+		`for offset = 0, #tagChoices - 1 do`, `(tagPickerIndex + offset - 1) % #tagChoices + 1`,
+		`TAG_PICKER_LIMIT = 50`, `return choices, true`, `visible = tagChoicesTruncated`,
+		`function onQueryChanged`, `tagPickerOpen = false`, `tagPickerQuery = ""`,
+		`key == "ctrl+t"`, `key == "ctrl+shift+t"`, `tagPickerIndex = tagPickerIndex % #choices + 1`,
 		`ui.input`, `ui.select`, `helper.openArguments`, `helper.operationId`,
 	} {
 		if !strings.Contains(panel, required) {
